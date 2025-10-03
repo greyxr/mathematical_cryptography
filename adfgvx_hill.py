@@ -4,10 +4,10 @@ import random
 import string
 class AdfgvxCipher():
     def prepare_string(self, string):
-        return "".join(i.upper() if i.isalpha() else i for i in string).replace("J","I")
+        return "".join(i.upper() if i.isalpha() else i for i in string)
     def create_matrix(self, key):
         letters = dict()
-        alpha_set = [i for i in 'ABCDEFGHIKLMNOPQRSTUVWXYZ0123456789 ']
+        alpha_set = [i for i in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789 ']
         alpha_set.reverse()
         key_set = [i for i in key]
         key_set.reverse()
@@ -174,8 +174,8 @@ def key_generator():
             key = "".join(random.sample(letters, 10))
             matrix = hill.create_matrix(key)
         else:
-            print("Done. Took",count,"tries.")
-            print("Key:",key)
+            # print("Done. Took",count,"tries.")
+            # print("Key:",key)
             return key
     return None
 
@@ -183,10 +183,109 @@ def key_generator():
 key = key_generator()
 if key is None:
     raise Exception("No key found")
-plaintext = "ASDF MESSAGE 123 "
-cipher = JointCipher()
-print(plaintext)
-ciphertext = cipher.encode(plaintext, key)
-print(ciphertext)
-decoded = cipher.decode(ciphertext)
-print(decoded)
+# plaintext = "ASDF MESSAGE 123 "
+message1 = """According to all known laws of aviation, there is no way a bee should be able to fly.
+Its wings are too small to get its fat little body off the ground.
+The bee, of course, flies anyway because bees don't care what humans think is impossible.
+Yellow, black. Yellow, black. Yellow, black. Yellow, black.
+Ooh, black and yellow!
+Let's shake it up a little.
+Barry! Breakfast is ready!
+Coming!
+Hang on a second.
+Hello?
+Barry?
+Adam?
+Can you believe this is happening?
+I can't.
+I'll pick you up.
+Looking sharp.
+Use the stairs, Your father paid good money for those.
+Sorry. I'm excited.
+Here's the graduate.
+We're very proud of you, son.
+A perfect report card, all B's.
+Very proud.
+Ma! I got a thing going here.
+You got lint on your fuzz.
+Ow! That's me!"""
+
+message2 = """Four score and seven years ago our fathers brought forth on this continent, a new nation, conceived in Liberty, and dedicated to the proposition that all men are created equal.
+
+Now we are engaged in a great civil war, testing whether that nation, or any nation so conceived and so dedicated, can long endure. We are met on a great battle-field of that war. We have come to dedicate a portion of that field, as a final resting place for those who here gave their lives that that nation might live. It is altogether fitting and proper that we should do this.
+But, in a larger sense, we can not dedicate -- we can not consecrate -- we can not hallow -- this ground. The brave men, living and dead, who struggled here, have consecrated it, far above our poor power to add or detract.
+Abraham Lincoln
+November 19, 1863"""
+
+message3 = """’Twas brillig, and the slithy toves
+      Did gyre and gimble in the wabe:
+All mimsy were the borogoves,
+      And the mome raths outgrabe.
+
+“Beware the Jabberwock, my son!
+      The jaws that bite, the claws that catch!
+Beware the Jubjub bird, and shun
+      The frumious Bandersnatch!”
+
+He took his vorpal sword in hand;
+      Long time the manxome foe he sought—
+So rested he by the Tumtum tree
+      And stood awhile in thought.
+
+And, as in uffish thought he stood,
+      The Jabberwock, with eyes of flame,
+Came whiffling through the tulgey wood,
+      And burbled as it came!
+
+One, two! One, two! And through and through
+      The vorpal blade went snicker-snack!
+He left it dead, and with its head
+      He went galumphing back.
+
+“And hast thou slain the Jabberwock?
+      Come to my arms, my beamish boy!
+O frabjous day! Callooh! Callay!”
+      He chortled in his joy.
+
+’Twas brillig, and the slithy toves
+      Did gyre and gimble in the wabe:
+All mimsy were the borogoves,
+      And the mome raths outgrabe."""
+
+def process_message(message):
+    return "".join(i.upper() for i in message.replace("\n"," ") if (i.isalnum() or i == " ") ).replace("       "," ")
+message1 = process_message(message1)
+message2 = process_message(message2)
+message3 = process_message(message3)
+
+
+def encode_message(plaintext, key):
+    cipher = JointCipher()
+    # print(plaintext)
+    ciphertext = cipher.encode(plaintext, key)
+    print(ciphertext)
+    plaintext2 = cipher.decode(ciphertext)
+    # print(plaintext2)
+    # print(plaintext == plaintext2)
+    # print("---------")
+
+def encode_long_message(message, key):
+    print(key)
+    messages = [message[i:i+140] for i in range(0, len(message), 140)]
+    for i in range(len(messages)):
+        print("Message ",i+1)
+        encode_message(messages[i], key)
+    print("----------------------")
+
+print("----------------------")
+print("First encryption:")
+key = key_generator()
+encode_long_message(message1, key)
+
+print("Second encryption:")
+encode_long_message(message2, key)
+
+print("Third encryption:")
+key2 = key_generator()
+encode_long_message(message3, key2)
+
