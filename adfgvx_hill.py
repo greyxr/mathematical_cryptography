@@ -37,11 +37,11 @@ class AdfgvxCipher():
             key_numbers[key[i]] += 1
         # print(key_numbers)
         last_index = 0
-        for i in key:
+        for i in sorted(key):
             key_matrix[i] = [j for j in ciphertext[last_index:last_index+key_numbers[i]]]
             last_index += key_numbers[i]
         # print(key_matrix)
-        return dict(sorted(key_matrix.items()))
+        return key_matrix
     def substitute_characters(self, plaintext, letters):
         intermediate = ""
         for i in plaintext:
@@ -99,13 +99,8 @@ class AdfgvxCipher():
         row, col = code.index(digram[0]), code.index(digram[1])
         return self.matrix[row][col]
     def decode(self, ciphertext):
-        # Recreate key matrix
         key_matrix = self.recreate_key_matrix(ciphertext, self.key_word)
         digrams = self.create_digrams(self.read_across_matrix(key_matrix, self.key_word))
-        # print(self.matrix)
-        # Get intermediate ciphertext
-        # Decrypt digrams
-        # digrams = self.create_digrams(ciphertext)
         decrypted = []
         for i in digrams:
             decrypted.append(self.decrypt_digram(i))
@@ -158,14 +153,36 @@ class JointCipher():
         self.hill = HillCipher()
     def encode(self, plaintext, key):
         intermediate_ciphertext = self.adfgvx.encode(plaintext, key[:6], key[7:])
+        # print("IT:", intermediate_ciphertext)
         ciphertext = self.hill.encode(intermediate_ciphertext, key)
         return ciphertext
     def decode(self, ciphertext):
         intermediate_ciphertext = self.hill.decode(ciphertext).replace("Z","")
+        # print("IT:", intermediate_ciphertext)
         plaintext = self.adfgvx.decode(intermediate_ciphertext)
         return plaintext
 
-key = "LSXCPFUDEH"
+def key_generator():
+    hill = HillCipher()
+    letters = [c for c in string.ascii_uppercase if c != "J"]
+    key = "".join(random.sample(letters, 10))
+    matrix = hill.create_matrix(key)
+    count = 1
+    for i in range(1000):
+        if not hill.is_invertible(matrix):
+            count += 1
+            key = "".join(random.sample(letters, 10))
+            matrix = hill.create_matrix(key)
+        else:
+            print("Done. Took",count,"tries.")
+            print("Key:",key)
+            return key
+    return None
+
+# key = "LSXCPFUDEH"
+key = key_generator()
+if key is None:
+    raise Exception("No key found")
 plaintext = "ASDF MESSAGE 123 "
 cipher = JointCipher()
 print(plaintext)
