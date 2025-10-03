@@ -24,7 +24,7 @@ class VignereCipher():
         return count  
     def find_key_length(self):
         key_length, max_displacement = 0, 0
-        for i in range(1,7):
+        for i in range(1,10):
             coincidences = self.find_coincidences(i)
             if (coincidences > max_displacement):
                 max_displacement = coincidences
@@ -70,10 +70,12 @@ class VignereCipher():
         if ciphertext is not None:
             self.ciphertext = self.prepare_string(ciphertext)
         key_length = self.find_key_length()
+        print("Found key length", key_length)
         key = ""
         for i in range(key_length):
             char_num = self.get_key_char_num(key_length, i)
             key += self.ascii_char(char_num)
+        print("Key:", key[:key_length])
         return key
     def decode_string(self, ciphertext, key):
         if (self.ciphertext is None):
@@ -93,13 +95,14 @@ class VignereCipher():
         key = self.get_key()
         decoded_string = self.decode_string(ciphertext, key)
         return decoded_string
-ciphertext = "VVHQWVVRHMUSGJGTHKIHTSSEJCHLSFCBGVWCRLRYQTFSVGAHWKCUHWAUGLQHNSLRLJSHBLTSPISPRDXLJSVEEGHLQWKASSKUWEPWQTWVSPGOELKCQYFNSVWLJSNIQKGNRGYBWLWGOVIOKHKAZKQKXZGYHCECMEIUJOQKWFWVEFQHKIJRCLRLKBIENQFRJLJSDHGRHLSFQTWLAUQRHWDMWLGUSGIKKFLRYVCWVSPGPMLKASSJVOQXEGGVEYGGZMLJCXXLJSVPAIVWIKVRDRYGFRJLJSLVEGGVEYGGEIAPUUISFPBTGNWWMUCZRVTWGLRWUGUMNCZVILE"
-plaintext = "THEMETHODUSEDFORTHEPREPARATIONANDREADINGOFCODEMESSAGESISSIMPLEINTHEEXTREMEANDATTHESAMETIMEIMPOSSIBLEOFTRANSLATIONUNLESSTHEKEYISKNOWNTHEEASEWITHWHICHTHEKEYMAYBECHANGEDISANOTHERPOINTINFAVOROFTHEADOPTIONOFTHISCODEBYTHOSEDESIRINGTOTRANSMITIMPORTANTMESSAGESWITHOUTTHESLIGHTESTDANGEROFTHEIRMESSAGESBEINGREADBYPOLITICALORBUSINESSRIVALSETC"
+ciphertext = '''TKSYM WRJGH KBPTE IKCYR WXIEL QUPSU TLLGY FIKYI AVFNR LQFKV VSMBM
+JOCZG ILSEA PZRGC VVHTV QYKXJ SHARV IPCOG HXGZC GLQNE EXLPD QVXWB
+LVKCT RSVXY WUORP NEJKV YBROG IQRAB KZEGZ AAJSM QRANL AGZCG LKVAT
+ZSUME AFQIC YSXLN PUSJL VORWI QVMUL EMVXV JHHPI GIKGP LVWAI TMTLJ
+LQPVL JLBXP IIHGY ZMBWV SXLFH ZSGHK UTEKS DHCYV WWRTZ CYGQI CJMIN
+RWBXY SVAJS XVFYT HZWPE MWUPZ MTEIX GHGYZ IJSNA USCKY GPLUE AKRHK
+UTWMG LJKAL LWPVK YOVPM XYWQA UIZHF WUUGE VIOHG YVIVG VVEYL TBSXJ
+CWUIZ GRFVL YPBLV VKMSI ZIEUG ZBGIR RLJPR J'''
 decoder = VignereCipher()
-cipher = decoder.encode(plaintext, "CODES")
-print("----------------------------------------")
-print(cipher)
-print("----------------------------------------")
-print(decoder.decode_string(cipher, "CODES"))
-print("----------------------------------------")
-print(decoder.crack_code(cipher))
+print(decoder.crack_code(ciphertext))
+# I wasn't able to fit the whole class in one screenshot, but full code is at github.com/greyxr/mathematical-cryptography
