@@ -1,98 +1,135 @@
+from itertools import permutations
+
 class AdfgxCipher():
     def prepare_string(self, string):
-        return "".join(i.upper() for i in string if i.isalpha()).replace("J","I")
-    def create_matrix(self):
-        # Create two structures, a list to map coords to letters
-        # And a dict to map letters to coords
+        return "".join(i.upper() for i in string if i.isalpha()).replace("J", "I")
+    def prepare_key(self, key):
+        seen = set()
+        seen_add = seen.add
+        return "".join([x for x in key if not (x in seen or seen_add(x))])
+    def create_matrix(self, key):
         letters = dict()
         alpha_set = [i for i in 'ABCDEFGHIKLMNOPQRSTUVWXYZ']
         alpha_set.reverse()
+        key_set = [i for i in key]
+        key_set.reverse()
         matrix = [[] for i in range(5)]
         for i in range(25):
-            char = alpha_set.pop()
+            if (key_set):
+                char = key_set.pop()
+            else:
+                char = alpha_set.pop()
+                while (char in key):
+                    char = alpha_set.pop()
             letters[char] = tuple([i//5, i%5])
             matrix[i//5].append(char)
-        # print(letters)
-        # print(matrix)
         return matrix, letters
-    def create_digrams(self, plaintext):
-        digrams = []
-        for i in range(0,len(plaintext),2):
-            # print(plaintext[i],end="")
-            if (i+1 < len(plaintext)):
-                if (plaintext[i] == plaintext[i+1]):
-                    digrams.append(plaintext[i] + "X")
-                    digrams.append(plaintext[i+1] + "X")
-                else:
-                    digrams.append(plaintext[i] + plaintext[i+1])
-            else:
-                digrams.append(plaintext[i] + "X")
-                # print('X',end=" ")
-        # print(digrams)
-        return digrams
+    def create_key_matrix(self, inter, key):
+        key_matrix = {i:[] for i in key}
+        for i in range(len(inter)):
+            key_matrix[key[i%len(key)]].append(inter[i])
+        key_matrix = dict(sorted(key_matrix.items()))
+        return key_matrix
+    def recreate_key_matrix(self, ciphertext, key):
+        key_matrix = {i:[] for i in key}
+        base_columns = len(ciphertext) // len(key)
+        leftover = len(ciphertext) % len(key)
+        key_numbers = {i:base_columns for i in key}
+        for i in range(leftover):
+            key_numbers[key[i]] += 1
+        # print(key_numbers)
+        last_index = 0
+        for i in sorted(key):
+            key_matrix[i] = [j for j in ciphertext[last_index:last_index+key_numbers[i]]]
+            last_index += key_numbers[i]
+        # print(key_matrix)
+        return key_matrix
     def substitute_characters(self, plaintext, letters):
         intermediate = ""
         for i in plaintext:
             intermediate += self.create_digraph(i, letters)
+        # print(intermediate)
         return intermediate
     def create_digraph(self, char, letters):
         [row, col] = letters[char]
         code = "ADFGX"
         return code[row] + code[col]
-    def transpose_columns(self, inter, keyword):
-        key_length = len(keyword)
-        key_map = {i:[] for i in keyword}
-        # Split inter into columns and keep track in a map
-        # so we can sort them later
-        for i in range(len(inter)):
-            current_col = i % key_length
-            key_map[keyword[current_col]] = inter[i]
-        print(key_map)
-        print(sorted(key_map))
-        return sorted(key_map)
-    def unpose_columns(self, matrix, keyword):
-        # I know that's not a word but it's late
-        key_map = {i:[] for i in keyword}
-        for i in keyword:
-            key_map[i] = matrix[i]
-        return self.read_matrix(key_map)
     def read_matrix(self, matrix):
         string = []
-        # Reverse columns to pop elements more efficiently later
         for i in matrix:
-            matrix[i].reverse()
-        while any(matrix):
-            for col in matrix:
-                if col:
-                    string.append(matrix[col].pop())
+            string.append("".join(matrix[i]))
         return "".join(string)
-    def encrypt_digram(self, digram, matrix, letters):
-        [frow, fcol] = letters[digram[0]]
-        [srow, scol] = letters[digram[1]]
-        new_frow, new_fcol, new_srow, new_scol = 0, 0, 0, 0
-        if frow == srow:
-            new_frow, new_fcol, new_srow, new_scol = frow,(fcol+1)%5,srow,(scol+1)%5
-        elif fcol == scol:
-            new_frow, new_fcol, new_srow, new_scol = (frow+1)%5,fcol,(srow+1)%5,scol
-        else:
-            new_frow, new_fcol, new_srow, new_scol = frow,scol,srow,fcol
-        return matrix[new_frow][new_fcol] + matrix[new_srow][new_scol]
-    def encode(self, plaintext, key):
+    def read_across_matrix(self, matrix, key):
+        digrams = []
+        while any(matrix.values()):
+            row = []
+            for i in key:
+                if any(matrix[i]):
+                    row.append(matrix[i].pop(0))
+            digrams = digrams + row
+        return "".join(digrams)
+    def create_digrams(self, ciphertext):
+        return [ciphertext[i]+ciphertext[i+1] for i in range(0,len(ciphertext),2)]
+    def encode(self, plaintext, key1, key2):
         plaintext = self.prepare_string(plaintext)
-        matrix, letters = self.create_matrix()
+        key1 = self.prepare_key(key1)
+        key1 = key1.upper()
+        matrix, letters = self.create_matrix(key1)
         self.matrix = matrix
-        self.letters = letters
+        self.key_word = key2
         inter = self.substitute_characters(plaintext, letters)
-
-        return encrypted
+        # Columnar transposition
+        key_matrix = self.create_key_matrix(inter, key2)
+        return self.read_matrix(key_matrix)
+    def decrypt_digram(self, digram):
+        code = "ADFGX"
+        if digram[0] not in code or digram[1] not in code:
+            raise Exception("Invalid ciphertext")
+        row, col = code.index(digram[0]), code.index(digram[1])
+        return self.matrix[row][col]
     def decode(self, ciphertext):
-        digrams = self.create_digrams(ciphertext)
-        decrypted = ""
+        key_matrix = self.recreate_key_matrix(ciphertext, self.key_word)
+        digrams = self.create_digrams(self.read_across_matrix(key_matrix, self.key_word))
+        decrypted = []
         for i in digrams:
-            decrypted += self.decrypt_digram(i, self.matrix, self.letters)
-        return decrypted
+            decrypted.append(self.decrypt_digram(i))
+        return "".join(decrypted)
+    def brute_force_decode(self, ciphertext, matrix, testWord):
+        self.matrix = matrix
+        self.key_word = testWord
+        key_matrix = self.recreate_key_matrix(ciphertext, self.key_word)
+        digrams = self.create_digrams(self.read_across_matrix(key_matrix, testWord))
+        decrypted = []
+        for i in digrams:
+            decrypted.append(self.decrypt_digram(i))
+        return "".join(decrypted)
 decoder = AdfgxCipher()
-# cipher = decoder.encode("Did he play fair at St Andrews golf course.", "cryptography")
-# print(cipher)
-# print(decoder.decode(cipher))
-print(decoder.read_matrix({}, "test"))
+# decoder.encode("Celebrate your success", "abcd", "test")
+cipher = "GDGDAADDGDGFAXDFAXDFAFDXGDFGFAAFDGDADGDADAGDDFAAGFDDADGDAFDDAFXAADADGGFGDDDGFXFXFXFDXGAAXXDGAGXGDDGDDXGDGD"
+
+matrix = [
+    ['C', 'E', 'L', 'B', 'R'],
+     ['A', 'T', 'Y', 'O', 'U'],
+     ['S', 'D', 'F', 'G', 'H'],
+     ['I', 'K', 'M', 'N', 'P'],
+     ['Q', 'V', 'W', 'X', 'Z']
+]
+
+# print(decoder.brute_force_decode(cipher, matrix, "ABC"))
+
+# for i in range(1,6): # Try all keys of length 10
+#     # Try every permutation of length i
+#     for p in permutations(range(1,i+1)):
+#         print(p)
+
+for p in permutations(range(1, 6)):
+        key = "".join(chr(i+64) for i in p)
+        print(decoder.brute_force_decode(cipher, matrix, key))
+
+# key = "PGCENBQOZRSLAFTMDVIWKUYXH"
+
+# c = decoder.encode("Kaiser Wilhelm", key, "RHEIN")
+# print(c)
+# print(decoder.decode(c))
+
+# WINTERTIMEVERSIONOFDCONETWENTYONETHIRTYFOURTHIRTYFIVE
