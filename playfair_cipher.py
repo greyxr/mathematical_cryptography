@@ -73,13 +73,50 @@ class PlayfairCipher():
         for i in digrams:
             encrypted += self.encrypt_digram(i, matrix, letters)
         return encrypted
-    def decode(self, ciphertext):
+    def decode(self, ciphertext, key=None):
+        if key is not None:
+            matrix, letters = self.create_matrix(key)
+            self.matrix = matrix
+            self.letters = letters
         digrams = self.create_digrams(ciphertext)
         decrypted = ""
         for i in digrams:
             decrypted += self.decrypt_digram(i, self.matrix, self.letters)
         return decrypted
 decoder = PlayfairCipher()
-cipher = decoder.encode("Did he play fair at St Andrews golf course.", "cryptography")
-print(cipher)
-print(decoder.decode(cipher))
+# cipher = decoder.encode("Did he play fair at St Andrews golf course.", "cryptography")
+# print(cipher)
+# print(decoder.decode(cipher))
+from functools import cache, lru_cache
+import json
+from typing import List
+with open("words_dictionary.json") as f:
+    words = json.load(f)
+class Solution:
+    def wordBreak(self, s: str) -> bool:
+        @lru_cache(None)
+        def checkForWords(substring):
+            if substring in words:
+                return True
+            canBreak = False
+            for i in range(len(substring)):
+                if substring[:i] in words:
+                    if checkForWords(substring[i:]):
+                        canBreak = True
+            return canBreak
+        return checkForWords(s)
+
+solution = Solution()
+from itertools import permutations
+end = 'PUSHMIXGQZ'
+for p in permutations('NEABCDKORTVY'):
+    p = list(p)
+    p.insert(2, 'W')
+    p.insert(7, 'F')
+    p.insert(12, 'L')
+    key = "".join(p) + end
+    plaintext = decoder.decode("EWFOHUFMZEZYFVATLYATYKLWGXPFAMTR", key)
+    if solution.wordBreak(plaintext.replace("X", "")):
+        print("Key:", key)
+        print("Plaintext:", plaintext)
+        break
