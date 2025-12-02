@@ -270,7 +270,7 @@ def encode_message(plaintext, key):
     # print("---------")
 
 def encode_long_message(message, key):
-    print(key)
+    # print(key)
     messages = [message[i:i+140] for i in range(0, len(message), 140)]
     for i in range(len(messages)):
         print("Message ",i+1)
@@ -283,9 +283,10 @@ key = key_generator()
 encode_long_message(message1, key)
 
 print("Second encryption:")
-encode_long_message(message2, key)
+key2 = key_generator()
+encode_long_message(message1, key2)
 
 print("Third encryption:")
-key2 = key_generator()
-encode_long_message(message3, key2)
+key3 = key_generator()
+encode_long_message(message3, key3)
 
